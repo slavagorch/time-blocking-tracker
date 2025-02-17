@@ -4,7 +4,6 @@ import google.auth
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-import pandas as pd
 
 
 # Define the path to credentials using the environment variable
