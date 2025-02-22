@@ -46,7 +46,11 @@ def authenticate_google_calendar():
             creds.refresh(google.auth.transport.requests.Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=8080)  # Force fixed port 8080
+
+            if os.getenv("STREAMLIT_SERVER"):  # Check if running in Streamlit Cloud
+                creds = flow.run_console()  # Uses console authentication instead
+            else:
+                creds = flow.run_local_server(port=8080)  # Works locally
 
         # Save the new token in the same global config directory
         os.makedirs(os.path.dirname(TOKEN_PATH), exist_ok=True)
