@@ -14,22 +14,25 @@ LOCAL_TOKEN_PATH = os.path.expanduser("~/.config/gcal_auth/token.json")
 CREDENTIALS_PATH = LOCAL_CREDENTIALS_PATH
 TOKEN_PATH = LOCAL_TOKEN_PATH
 
-# Check if an environment variable is set and points to a valid file
-env_creds_path = os.getenv("GOOGLE_CREDENTIALS_PATH")
-if env_creds_path and os.path.exists(env_creds_path):
-    CREDENTIALS_PATH = env_creds_path
-    TOKEN_PATH = os.path.join(os.path.dirname(env_creds_path), "token.json")
-else:
-    # Attempt to load credentials from Streamlit secrets
-    secrets = getattr(st, "secrets", None)
-    if secrets and "google" in secrets and secrets["google"].get("credentials"):
-        creds_json = secrets["google"]["credentials"].strip()
-        if creds_json:
-            # Write credentials to a temporary file on Streamlit Cloud
-            CREDENTIALS_PATH = "/tmp/credentials.json"
-            TOKEN_PATH = "/tmp/token.json"
-            with open(CREDENTIALS_PATH, "w") as f:
-                f.write(creds_json)
+# Check if running on Streamlit Cloud (secrets should exist)
+if "google" in getattr(st, "secrets", {}):  # Ensures it doesn’t crash locally
+    creds_json = st.secrets["google"].get("credentials", "").strip()
+
+    if creds_json:
+        # Override paths for Streamlit Cloud
+        CREDENTIALS_PATH = "/tmp/credentials.json"
+        TOKEN_PATH = "/tmp/token.json"
+
+        # Save credentials to a temporary file
+        with open(CREDENTIALS_PATH, "w") as f:
+            f.write(creds_json)
+
+# Ensure credentials file exists before proceeding
+if not os.path.exists(CREDENTIALS_PATH):
+    raise FileNotFoundError(
+        f"Google API credentials not found. Expected at: {CREDENTIALS_PATH}. "
+        "Ensure you have added credentials in Streamlit secrets or locally."
+    )
 
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
